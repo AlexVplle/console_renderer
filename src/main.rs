@@ -1,18 +1,12 @@
 mod loader;
 
-use std::io::stdout;
+use std::env;
 
-use crossterm::{
-    style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
-    ExecutableCommand
-};
-
-fn main() -> std::io::Result<()> {
-    stdout()
-        .execute(SetForegroundColor(Color::Blue))?
-        .execute(SetBackgroundColor(Color::Red))?
-        .execute(Print("Styled text here."))?
-        .execute(ResetColor)?;
-    Ok(())
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    let mut vertices_array = vec![];
+    let uvs_array = vec![];
+    let normals_array = vec![];
+    loader::loader::load_obj(args[1].clone() ,&mut vertices_array, uvs_array, normals_array);
 }
 
