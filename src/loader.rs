@@ -1,16 +1,16 @@
 use std::{fs, str::SplitWhitespace, path::Path, usize};
-use crate::structures::{Vec2, Vec3};
+use nalgebra::{Vector2, Vector3};
 
 
 pub fn load_obj(
     file_path: String, 
-    vertices_array: &mut Vec<Vec3>,
-    uvs_array: &mut Vec<Vec2>,
-    normals_array: &mut Vec<Vec3>,
+    vertices_array: &mut Vec<Vector3<f64>>,
+    uvs_array: &mut Vec<Vector2<f64>>,
+    normals_array: &mut Vec<Vector3<f64>>,
 ) -> bool {
-    let mut temp_vertices_array : Vec<Vec3> = vec![];
-    let mut temp_uvs_array : Vec<Vec2> = vec![];
-    let mut temp_normals_array : Vec<Vec3> = vec![];
+    let mut temp_vertices_array : Vec<Vector3<f64>> = vec![];
+    let mut temp_uvs_array : Vec<Vector2<f64>> = vec![];
+    let mut temp_normals_array : Vec<Vector3<f64>> = vec![];
     
     let path : &Path = Path::new(&file_path);
 
@@ -40,7 +40,7 @@ pub fn load_obj(
                 "v" => {
                     if let (Some(x_str), Some(y_str), Some(z_str)) = (line_iter.next(), line_iter.next(), line_iter.next()) {
                         if let (Ok(x), Ok(y), Ok(z)) = (x_str.parse::<f64>(), y_str.parse::<f64>(), z_str.parse::<f64>()) {
-                            temp_vertices_array.push(Vec3 { x, y, z })
+                            temp_vertices_array.push(Vector3::new(x, y, z))
                         }
                     }
                 },
@@ -48,7 +48,7 @@ pub fn load_obj(
                 "vt" => {
                     if let (Some(x_str), Some(y_str)) = (line_iter.next(), line_iter.next()) {
                         if let (Ok(x), Ok(y)) = (x_str.parse::<f64>(), y_str.parse::<f64>()) {
-                            temp_uvs_array.push(Vec2 { x, y })
+                            temp_uvs_array.push(Vector2::new(x, y))
                         }
                     }
                 },
@@ -56,7 +56,7 @@ pub fn load_obj(
                 "vn" => {
                     if let (Some(x_str), Some(y_str), Some(z_str)) = (line_iter.next(), line_iter.next(), line_iter.next()) {
                         if let (Ok(x), Ok(y), Ok(z)) = (x_str.parse::<f64>(), y_str.parse::<f64>(), z_str.parse::<f64>()) {
-                            temp_normals_array.push(Vec3 { x, y, z });
+                            temp_normals_array.push(Vector3::new(x, y, z));
                         }
                     }
                 },
