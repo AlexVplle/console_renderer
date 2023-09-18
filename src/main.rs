@@ -145,12 +145,13 @@ impl App {
                         KeyCode::Char('d') => self.update_rotation(
                             self.rotation_matrix_axis.y_rotation_matrix.counterclockwise,
                         ),
-                        KeyCode::Char('r') => self.update_rotation(
-                            self.rotation_matrix_axis.x_rotation_matrix.clockwise,
-                        ),
+                        KeyCode::Char('r') => self
+                            .update_rotation(self.rotation_matrix_axis.x_rotation_matrix.clockwise),
                         KeyCode::Char('f') => self.update_rotation(
                             self.rotation_matrix_axis.x_rotation_matrix.counterclockwise,
                         ),
+                        KeyCode::Char('z') => self.scale_factor += 0.1,
+                        KeyCode::Char('s') => self.scale_factor -= 0.1,
                         KeyCode::Esc => return Ok(()),
                         _ => {}
                     },
@@ -167,26 +168,26 @@ impl App {
         let center_x = self.window_size.columns as f64 / 2.0;
         let center_y = self.window_size.rows as f64 / 2.0;
         for triangle in &mut self.triangle_array {
-            let projected_triangle: [Vector3<f64>; 3] = triangle.clone();
-            for point in projected_triangle {
-                point = multiply_matrix_vector(point, self.camera.projection_matrix);
-                let scaled_first_x = (point.x * self.scale_factor * center_x) + center_x;
-                let scaled_first_y = (point.y * self.scale_factor * center_y) + center_y;
+            let mut projected_triangle: [Vector3<f64>; 3] =
+                [Vector3::zeros(), Vector3::zeros(), Vector3::zeros()];
+
+            for i in 0..3 {
+                projected_triangle[i] =
+                    multiply_matrix_vector(triangle[i], self.camera.projection_matrix);
+                projected_triangle[i].z += 3.0; 
+                projected_triangle[i].x =
+                    (projected_triangle[i].x * self.scale_factor * center_x) + center_x;
+                projected_triangle[i].y =
+                    (projected_triangle[i].y * self.scale_factor * center_y) + center_y;
             }
 
-
-            let scaled_second_x = (second_point.x * self.scale_factor * center_x) + center_x;
-            let scaled_second_y = (second_point.y * self.scale_factor * center_y) + center_y;
-
-            let scaled_third_x = (third_point.x * self.scale_factor * center_x) + center_x;
-            let scaled_third_y = (third_point.y * self.scale_factor * center_y) + center_y;
             self.engine.triangle(
-                scaled_first_x as i32,
-                scaled_first_y as i32,
-                scaled_second_x as i32,
-                scaled_second_y as i32,
-                scaled_third_x as i32,
-                scaled_third_y as i32,
+                projected_triangle[0].x as i32,
+                projected_triangle[0].y as i32,
+                projected_triangle[1].x as i32,
+                projected_triangle[1].y as i32,
+                projected_triangle[2].x as i32,
+                projected_triangle[2].y as i32,
                 pixel::pxl('#'),
             );
             self.engine.draw();
@@ -195,12 +196,34 @@ impl App {
     }
 
     fn update_rotation(&mut self, rotation_matrix: Matrix4<f64>) {
+        let center = self.find_center();
         for triangle in &mut self.triangle_array {
             for point in triangle.iter_mut() {
-                *point = multiply_matrix_vector(*point, rotation_matrix)
+                // Soustrayez le centre de l'objet (si vous l'avez calculé) de chaque point
+                *point -= center;
+
+                // Appliquez la matrice de rotation
+                *point = multiply_matrix_vector(*point, rotation_matrix);
+
+                // Ajoutez le centre de l'objet de retour à chaque point
+                *point += center;
             }
         }
     }
+
+    fn find_center(&self) -> Vector3<f64> {
+        let mut center = Vector3::zeros();
+        let num_points = self.triangle_array.len() * 3;
+
+        for triangle in &self.triangle_array {
+            for point in triangle.iter() {
+                center += *point;
+            }
+        }
+
+        center / num_points as f64
+    }
+
 }
 
 impl Drop for App {
