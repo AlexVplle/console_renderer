@@ -130,31 +130,16 @@ impl App {
 
     fn main_loop(&mut self) -> Result<(), String> {
         loop {
-            if event::poll(Duration::from_millis(500))
-                .expect("Error occurred during event listener")
-            {
+            if event::poll(Duration::from_millis(500)).expect("Error occurred during event listener") {
                 match event::read().expect("Error during reading events") {
-                    event::Event::Key(key) => match key.code {
-                        KeyCode::Char('a') => self.update_rotation(
-                            self.rotation_matrix_axis.z_rotation_matrix.counterclockwise,
-                        ),
-                        KeyCode::Char('e') => self
-                            .update_rotation(self.rotation_matrix_axis.z_rotation_matrix.clockwise),
-                        KeyCode::Char('q') => self
-                            .update_rotation(self.rotation_matrix_axis.y_rotation_matrix.clockwise),
-                        KeyCode::Char('d') => self.update_rotation(
-                            self.rotation_matrix_axis.y_rotation_matrix.counterclockwise,
-                        ),
-                        KeyCode::Char('r') => self.update_rotation(
-                            self.rotation_matrix_axis.x_rotation_matrix.clockwise,
-                        ),
-                        KeyCode::Char('f') => self.update_rotation(
-                            self.rotation_matrix_axis.x_rotation_matrix.counterclockwise,
-                        ),
-                        KeyCode::Esc => return Ok(()),
-                        _ => {}
+                    event::Event::Key(key) => {
+                        match key.code {
+                            KeyCode::Left => self.update_rotation(self.rotation_matrix.z_rotation_matrix),
+                            KeyCode::Esc => return Ok(()),
+                            _ => {},
+                        }
                     },
-                    _ => {}
+                    _ => {},
                 }
             }
             self.draw()?;
@@ -167,13 +152,12 @@ impl App {
         let center_x = self.window_size.columns as f64 / 2.0;
         let center_y = self.window_size.rows as f64 / 2.0;
         for triangle in &mut self.triangle_array {
-            let projected_triangle: [Vector3<f64>; 3] = triangle.clone();
-            for point in projected_triangle {
-                point = multiply_matrix_vector(point, self.camera.projection_matrix);
-                let scaled_first_x = (point.x * self.scale_factor * center_x) + center_x;
-                let scaled_first_y = (point.y * self.scale_factor * center_y) + center_y;
-            }
+            let first_point = multiply_matrix_vector(triangle[0], self.camera.projection_matrix);
+            let second_point = multiply_matrix_vector(triangle[1], self.camera.projection_matrix);
+            let third_point = multiply_matrix_vector(triangle[2], self.camera.projection_matrix);
 
+            let scaled_first_x = (first_point.x * self.scale_factor * center_x) + center_x;
+            let scaled_first_y = (first_point.y * self.scale_factor * center_y) + center_y;
 
             let scaled_second_x = (second_point.x * self.scale_factor * center_x) + center_x;
             let scaled_second_y = (second_point.y * self.scale_factor * center_y) + center_y;
