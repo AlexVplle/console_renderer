@@ -18,7 +18,7 @@ use crate::args::Args;
 fn main() {
     let args: Args = Args::parse();
 
-    let (vertices_array, uvs_array, normal_array) = match loader::load_obj(args.file_path) {
+    let (vertices_array, _uvs_array, _normal_array) = match loader::load_obj(args.file_path) {
         Ok(result) => result,
         Err(err) => {
             eprintln!("{}", err);
@@ -71,18 +71,6 @@ fn multiply_matrix_vector(vector: Vector3<f64>, matrix: Matrix4<f64>) -> Vector3
     return new_vector;
 }
 
-// fn draw_line(x_a: i64, y_a: i64, x_b: i64, y_b: i64, character: char) -> () {
-//     let delta_x: i64 = x_b - x_a;
-//     let delta_y: i64 = y_b - y_a;
-//     let m: f64 = delta_y as f64 / delta_x as f64;
-//     for i in 0..delta_x {
-//         let x: i64 = x_a + i;
-//         let y: i64 = y_a + (m * i as f64).ceil() as i64;
-//     }
-// }
-
-// fn draw_pixel(x: i64, y: i64) {}
-
 struct App {
     engine: ConsoleEngine,
     window_size: WindowSize,
@@ -93,7 +81,7 @@ struct App {
 }
 
 impl App {
-    fn new(triangle_array: Vec<[Vector3<f64>; 3]>) -> Result<Self, String> {
+    fn new(mut triangle_array: Vec<[Vector3<f64>; 3]>) -> Result<Self, String> {
         if let Err(_) = terminal::enable_raw_mode() {
             return Err(String::from("Could not turn on Raw mode"));
         };
@@ -104,16 +92,21 @@ impl App {
         let engine: ConsoleEngine = match console_engine::ConsoleEngine::init(
             window_size.columns as u32,
             window_size.rows as u32,
-            60,
+            30,
         ) {
             Ok(result) => result,
             Err(_) => return Err(String::from("Problem about creating console engine")),
         };
         let aspect_ratio: f64 = window_size.height as f64 / window_size.width as f64;
         let camera = Camera::new(0.1, 1000.0, 90.0, aspect_ratio);
-        let scale_factor: f64 = 0.5;
+        let scale_factor: f64 = 1.0;
         let rotation_matrix_axis: RotationMatrixAxis = RotationMatrixAxis::new(consts::PI / 30.0);
 
+        for triangle in &mut triangle_array {
+            for i in 0..3 {
+                triangle[i].z += 3.0;
+            }
+        }
         Ok(App {
             engine,
             triangle_array,
@@ -170,7 +163,7 @@ impl App {
             for i in 0..3 {
                 projected_triangle[i] =
                     multiply_matrix_vector(triangle[i], self.camera.projection_matrix);
-                projected_triangle[i].z += 3.0;
+                projected_triangle[i].z += 20.0;
                 projected_triangle[i].x =
                     (projected_triangle[i].x * self.scale_factor * center_x) + center_x;
                 projected_triangle[i].y =
@@ -223,9 +216,9 @@ impl App {
 
 impl Drop for App {
     fn drop(&mut self) {
+        println!("Ca passe");
         if let Err(err) = terminal::disable_raw_mode() {
             eprintln!("Could not turn off Raw mode: {}", err);
-            std::process::exit(1);
         };
     }
 }
