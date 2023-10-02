@@ -7,10 +7,10 @@ use std::{f64::consts, time::Duration};
 use clap::Parser;
 use console_engine::{pixel, ConsoleEngine};
 use crossterm::{
-    event::{self, KeyCode, KeyEvent},
+    event::{self, KeyCode},
     terminal::{self, WindowSize},
 };
-use nalgebra::{Matrix4, Vector2, Vector3};
+use nalgebra::{Matrix4, Vector3};
 use structures::{Camera, RotationMatrixAxis};
 
 use crate::args::Args;
@@ -18,17 +18,13 @@ use crate::args::Args;
 fn main() {
     let args: Args = Args::parse();
 
-    let mut vertices_array: Vec<Vector3<f64>> = vec![];
-    let mut uvs_array: Vec<Vector2<f64>> = vec![];
-    let mut normals_array: Vec<Vector3<f64>> = vec![];
-    if !loader::load_obj(
-        args.file_path,
-        &mut vertices_array,
-        &mut uvs_array,
-        &mut normals_array,
-    ) {
-        return;
-    }
+    let (vertices_array, uvs_array, normal_array) = match loader::load_obj(args.file_path) {
+        Ok(result) => result,
+        Err(err) => {
+            eprintln!("{}", err);
+            return;
+        }
+    };
 
     let mut triangle_array: Vec<[Vector3<f64>; 3]> = vec![];
     for chunk in vertices_array.chunks(3) {
@@ -174,7 +170,7 @@ impl App {
             for i in 0..3 {
                 projected_triangle[i] =
                     multiply_matrix_vector(triangle[i], self.camera.projection_matrix);
-                projected_triangle[i].z += 3.0; 
+                projected_triangle[i].z += 3.0;
                 projected_triangle[i].x =
                     (projected_triangle[i].x * self.scale_factor * center_x) + center_x;
                 projected_triangle[i].y =
@@ -223,13 +219,12 @@ impl App {
 
         center / num_points as f64
     }
-
 }
 
 impl Drop for App {
     fn drop(&mut self) {
         if let Err(err) = terminal::disable_raw_mode() {
-            eprintln!("Could not turn on Raw mode: {}", err);
+            eprintln!("Could not turn off Raw mode: {}", err);
             std::process::exit(1);
         };
     }
