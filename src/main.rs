@@ -44,33 +44,6 @@ fn main() {
     };
 }
 
-fn multiply_matrix_vector(vector: Vector3<f64>, matrix: Matrix4<f64>) -> Vector3<f64> {
-    let mut new_vector: Vector3<f64> = Vector3::new(
-        vector.x * matrix[(0, 0)]
-            + vector.y * matrix[(1, 0)]
-            + vector.z * matrix[(2, 0)]
-            + matrix[(3, 0)],
-        vector.x * matrix[(0, 1)]
-            + vector.y * matrix[(1, 1)]
-            + vector.z * matrix[(2, 1)]
-            + matrix[(3, 1)],
-        vector.x * matrix[(0, 2)]
-            + vector.y * matrix[(1, 2)]
-            + vector.z * matrix[(2, 2)]
-            + matrix[(3, 2)],
-    );
-    let w: f64 = vector.x * matrix[(0, 3)]
-        + vector.y * matrix[(1, 3)]
-        + vector.z * matrix[(2, 3)]
-        + matrix[(3, 3)];
-    if w != 0.0 {
-        new_vector.x /= w;
-        new_vector.y /= w;
-        new_vector.z /= w;
-    }
-    return new_vector;
-}
-
 struct App {
     engine: ConsoleEngine,
     window_size: WindowSize,
@@ -82,9 +55,9 @@ struct App {
 
 impl App {
     fn new(mut triangle_array: Vec<Triangle>) -> Result<Self, String> {
-        if let Err(_) = terminal::enable_raw_mode() {
-            return Err(String::from("Could not turn on Raw mode"));
-        };
+        // if let Err(_) = terminal::enable_raw_mode() {
+        //     return Err(String::from("Could not turn on Raw mode"));
+        // };
         let window_size: WindowSize = match terminal::window_size() {
             Ok(result) => result,
             Err(_) => return Err(String::from("Problem about getting window size")),
@@ -164,27 +137,27 @@ impl App {
                 .normal
                 .dot(&(triangle.vertices[0] - self.camera.position))
                 < 0.0
-        // if true
+            // if true
             {
-                let mut projected_triangle: [Vector3<f64>; 3] =
-                    [Vector3::zeros(), Vector3::zeros(), Vector3::zeros()];
+                let mut projected_triangle: Triangle = triangle.clone();
+                projected_triangle.multiply_matrix_vector(self.camera.projection_matrix);
 
                 for i in 0..3 {
-                    projected_triangle[i] =
-                        multiply_matrix_vector(triangle.vertices[i], self.camera.projection_matrix);
-                    projected_triangle[i].x =
-                        (projected_triangle[i].x * self.scale_factor * center_x) + center_x;
-                    projected_triangle[i].y =
-                        (projected_triangle[i].y * self.scale_factor * center_y) + center_y;
+                    projected_triangle.vertices[i].x =
+                        (projected_triangle.vertices[i].x * self.scale_factor * center_x)
+                            + center_x;
+                    projected_triangle.vertices[i].y =
+                        (projected_triangle.vertices[i].y * self.scale_factor * center_y)
+                            + center_y;
                 }
 
                 self.engine.triangle(
-                    projected_triangle[0].x as i32,
-                    projected_triangle[0].y as i32,
-                    projected_triangle[1].x as i32,
-                    projected_triangle[1].y as i32,
-                    projected_triangle[2].x as i32,
-                    projected_triangle[2].y as i32,
+                    projected_triangle.vertices[0].x as i32,
+                    projected_triangle.vertices[0].y as i32,
+                    projected_triangle.vertices[1].x as i32,
+                    projected_triangle.vertices[1].y as i32,
+                    projected_triangle.vertices[2].x as i32,
+                    projected_triangle.vertices[2].y as i32,
                     pixel::pxl('#'),
                 );
                 self.engine.draw();
@@ -197,9 +170,7 @@ impl App {
         let center = self.find_center();
         for triangle in &mut self.triangle_array {
             triangle.translate(-center);
-            for i in 0..3 {
-                triangle.vertices[i] = multiply_matrix_vector(triangle.vertices[i], rotation_matrix);
-            }
+            triangle.multiply_matrix_vector(rotation_matrix);
             triangle.translate(center);
             triangle.update_normal();
         }
@@ -221,7 +192,6 @@ impl App {
 
 impl Drop for App {
     fn drop(&mut self) {
-        println!("Ca passe");
         if let Err(err) = terminal::disable_raw_mode() {
             eprintln!("Could not turn off Raw mode: {}", err);
         };
