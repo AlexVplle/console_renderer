@@ -1,16 +1,10 @@
-use nalgebra::{Vector2, Vector3};
+use nalgebra::Vector3;
 use std::{fs, path::Path, str::SplitWhitespace, usize};
 
-pub fn load_obj(
-    file_path: String,
-) -> Result<(Vec<Vector3<f64>>, Vec<Vector2<f64>>, Vec<Vector3<f64>>), String> {
+pub fn load_obj(file_path: String) -> Result<Vec<Vector3<f64>>, String> {
     let mut temp_vertices_array: Vec<Vector3<f64>> = vec![];
-    let mut temp_uvs_array: Vec<Vector2<f64>> = vec![];
-    let mut temp_normals_array: Vec<Vector3<f64>> = vec![];
 
     let mut vertices_array: Vec<Vector3<f64>> = vec![];
-    let mut uvs_array: Vec<Vector2<f64>> = vec![];
-    let mut normals_array: Vec<Vector3<f64>> = vec![];
 
     let path: &Path = Path::new(&file_path);
 
@@ -46,43 +40,12 @@ pub fn load_obj(
                         }
                     }
                 }
-
-                "vt" => {
-                    if let (Some(x_str), Some(y_str)) = (line_iter.next(), line_iter.next()) {
-                        if let (Ok(x), Ok(y)) = (x_str.parse::<f64>(), y_str.parse::<f64>()) {
-                            temp_uvs_array.push(Vector2::new(x, y))
-                        }
-                    }
-                }
-
-                "vn" => {
-                    if let (Some(x_str), Some(y_str), Some(z_str)) =
-                        (line_iter.next(), line_iter.next(), line_iter.next())
-                    {
-                        if let (Ok(x), Ok(y), Ok(z)) = (
-                            x_str.parse::<f64>(),
-                            y_str.parse::<f64>(),
-                            z_str.parse::<f64>(),
-                        ) {
-                            temp_normals_array.push(Vector3::new(x, y, z));
-                        }
-                    }
-                }
-
                 "f" => {
                     for point in line_iter {
                         let mut split = point.split("/");
-                        if let (Some(vertice_str), Some(texture_str), Some(normal_str)) =
-                            (split.next(), split.next(), split.next())
-                        {
-                            if let (Ok(vertice), Ok(texture), Ok(normal)) = (
-                                vertice_str.parse::<usize>(),
-                                texture_str.parse::<usize>(),
-                                normal_str.parse::<usize>(),
-                            ) {
+                        if let Some(vertice_str) = split.next() {
+                            if let Ok(vertice) = vertice_str.parse::<usize>() {
                                 vertices_array.push(temp_vertices_array[vertice - 1].clone());
-                                uvs_array.push(temp_uvs_array[texture - 1].clone());
-                                normals_array.push(temp_normals_array[normal - 1].clone());
                             }
                         }
                     }
@@ -91,5 +54,5 @@ pub fn load_obj(
             }
         }
     }
-    Ok((vertices_array, uvs_array, normals_array))
+    Ok(vertices_array)
 }

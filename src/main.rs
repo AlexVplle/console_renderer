@@ -18,7 +18,7 @@ use crate::args::Args;
 fn main() {
     let args: Args = Args::parse();
 
-    let (vertices_array, _uvs_array, _normal_array) = match loader::load_obj(args.file_path) {
+    let vertices_array = match loader::load_obj(args.file_path) {
         Ok(result) => result,
         Err(err) => {
             eprintln!("{}", err);
