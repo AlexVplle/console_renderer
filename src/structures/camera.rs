@@ -1,6 +1,7 @@
 use nalgebra::{Vector3, Matrix4};
 use std::f64::consts;
 
+#[derive(Clone, Copy, PartialEq, PartialOrd, Debug, Default)]
 pub struct Camera {
     pub position: Vector3<f64>,
     pub projection_matrix: Matrix4<f64>,

@@ -60,11 +60,7 @@ impl App {
             Ok(result) => result,
             Err(_) => return Err(String::from("Problem about getting window size")),
         };
-        let engine: ConsoleEngine = match console_engine::ConsoleEngine::init(
-            window_size.columns as u32,
-            window_size.rows as u32,
-            15,
-        ) {
+        let engine: ConsoleEngine = match console_engine::ConsoleEngine::init_fill(15) {
             Ok(result) => result,
             Err(_) => return Err(String::from("Problem about creating console engine")),
         };
@@ -123,6 +119,7 @@ impl App {
                         KeyCode::Esc => return Ok(()),
                         _ => {}
                     },
+                    event::Event::Resize(columns, rows) => self.engine.resize(columns as u32, rows as u32),
                     _ => {}
                 }
             }
@@ -164,13 +161,12 @@ impl App {
                     .round() as u8;
 
             let char = match brightness {
-                230..=255 => '@', // Brightest
-                200..=229 => '#', // Slightly less bright
-                160..=199 => '*', // Dimmer
-                120..=159 => '+', // Even dimmer
-                80..=119 => '-',  // Very dim
-                40..=79 => '.',   // Darkest
-                _ => ' ',         // No brightness (very dark)
+                230..=255 => '@',
+                200..=229 => '#',
+                160..=199 => '*',
+                120..=159 => '+',
+                80..=119 => '-',
+                _ => '.',
             };
 
             self.engine.fill_triangle(

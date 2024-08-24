@@ -1,6 +1,6 @@
 use nalgebra::{Matrix4, Vector3};
 
-#[derive(Clone)]
+#[derive(Clone, Copy, PartialEq, PartialOrd, Debug, Default)]
 pub struct Triangle {
     pub vertices: [Vector3<f64>; 3],
     pub normal: Vector3<f64>,

@@ -1,10 +1,12 @@
 use nalgebra::Matrix4;
 
+#[derive(Clone, Copy, PartialEq, PartialOrd, Debug, Default)]
 pub struct RotationMatrix {
     pub clockwise: Matrix4<f64>,
     pub counterclockwise: Matrix4<f64>,
 }
 
+#[derive(Clone, Copy, PartialEq, PartialOrd, Debug, Default)]
 pub struct RotationMatrixAxis {
     pub x_rotation_matrix: RotationMatrix,
     pub y_rotation_matrix: RotationMatrix,
