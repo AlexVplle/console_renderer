@@ -3,10 +3,6 @@ use std::f64::consts;
 
 pub struct Camera {
     pub position: Vector3<f64>,
-    pub near: f64,
-    pub far: f64,
-    pub fov: f64,
-    pub aspect_ratio: f64,
     pub projection_matrix: Matrix4<f64>,
 }
 
@@ -39,10 +35,6 @@ impl Camera {
         );
         Camera {
             position,
-            near,
-            far,
-            fov,
-            aspect_ratio,
             projection_matrix,
         }
     }

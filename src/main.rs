@@ -5,13 +5,13 @@ mod structures;
 use std::{f64::consts, time::Duration};
 
 use clap::Parser;
-use console_engine::{pixel, ConsoleEngine};
+use console_engine::{pixel, Color, ConsoleEngine};
 use crossterm::{
     event::{self, KeyCode},
     terminal::{self, WindowSize},
 };
 use nalgebra::{Matrix4, Vector3};
-use structures::{Camera, RotationMatrixAxis, Triangle};
+use structures::{Camera, Light, RotationMatrixAxis, Triangle};
 
 use crate::args::Args;
 
@@ -51,13 +51,11 @@ struct App {
     camera: Camera,
     scale_factor: f64,
     rotation_matrix_axis: RotationMatrixAxis,
+    light: Light,
 }
 
 impl App {
     fn new(mut triangle_array: Vec<Triangle>) -> Result<Self, String> {
-        // if let Err(_) = terminal::enable_raw_mode() {
-        //     return Err(String::from("Could not turn on Raw mode"));
-        // };
         let window_size: WindowSize = match terminal::window_size() {
             Ok(result) => result,
             Err(_) => return Err(String::from("Problem about getting window size")),
@@ -65,7 +63,7 @@ impl App {
         let engine: ConsoleEngine = match console_engine::ConsoleEngine::init(
             window_size.columns as u32,
             window_size.rows as u32,
-            30,
+            15,
         ) {
             Ok(result) => result,
             Err(_) => return Err(String::from("Problem about creating console engine")),
@@ -77,6 +75,10 @@ impl App {
 
         let scale_factor: f64 = 1.0;
         let rotation_matrix_axis: RotationMatrixAxis = RotationMatrixAxis::new(consts::PI / 30.0);
+
+        let light_position: Vector3<f64> = Vector3::zeros();
+        let intensity: f64 = 15.0;
+        let light = Light::new(light_position, intensity);
 
         let translation_vector: Vector3<f64> = Vector3::new(0.0, 0.0, 3.0);
         for triangle in &mut triangle_array {
@@ -90,6 +92,7 @@ impl App {
             camera,
             scale_factor,
             rotation_matrix_axis,
+            light,
         })
     }
 
@@ -132,13 +135,12 @@ impl App {
         self.engine.clear_screen();
         let center_x = self.window_size.columns as f64 / 2.0;
         let center_y = self.window_size.rows as f64 / 2.0;
+
+        let mut visible_triangles = Vec::new();
+
         for triangle in &mut self.triangle_array {
-            if triangle
-                .normal
-                .dot(&(triangle.vertices[0] - self.camera.position))
-                < 0.0
-            // if true
-            {
+            let view_vector = triangle.vertices[0] - self.camera.position;
+            if triangle.normal.dot(&view_vector) < 0.0 {
                 let mut projected_triangle: Triangle = triangle.clone();
                 projected_triangle.multiply_matrix_vector(self.camera.projection_matrix);
 
@@ -151,18 +153,45 @@ impl App {
                             + center_y;
                 }
 
-                self.engine.triangle(
-                    projected_triangle.vertices[0].x as i32,
-                    projected_triangle.vertices[0].y as i32,
-                    projected_triangle.vertices[1].x as i32,
-                    projected_triangle.vertices[1].y as i32,
-                    projected_triangle.vertices[2].x as i32,
-                    projected_triangle.vertices[2].y as i32,
-                    pixel::pxl('#'),
-                );
-                self.engine.draw();
+                visible_triangles.push(projected_triangle);
             }
         }
+
+        for triangle in visible_triangles {
+            let light_direction = (self.light.position - triangle.vertices[0]).normalize();
+            let brightness: u8 =
+                (triangle.normal.dot(&light_direction).max(0.0) * self.light.intensity * 255.)
+                    .round() as u8;
+
+            let char = match brightness {
+                230..=255 => '@', // Brightest
+                200..=229 => '#', // Slightly less bright
+                160..=199 => '*', // Dimmer
+                120..=159 => '+', // Even dimmer
+                80..=119 => '-',  // Very dim
+                40..=79 => '.',   // Darkest
+                _ => ' ',         // No brightness (very dark)
+            };
+
+            self.engine.fill_triangle(
+                triangle.vertices[0].x as i32,
+                triangle.vertices[0].y as i32,
+                triangle.vertices[1].x as i32,
+                triangle.vertices[1].y as i32,
+                triangle.vertices[2].x as i32,
+                triangle.vertices[2].y as i32,
+                pixel::pxl_fg(
+                    char,
+                    Color::Rgb {
+                        r: brightness,
+                        g: brightness,
+                        b: brightness,
+                    },
+                ),
+            );
+        }
+
+        self.engine.draw();
         Ok(())
     }
 

@@ -3,7 +3,6 @@ use std::{fs, path::Path, str::SplitWhitespace, usize};
 
 pub fn load_obj(file_path: String) -> Result<Vec<Vector3<f64>>, String> {
     let mut temp_vertices_array: Vec<Vector3<f64>> = vec![];
-
     let mut vertices_array: Vec<Vector3<f64>> = vec![];
 
     let path: &Path = Path::new(&file_path);
@@ -36,7 +35,7 @@ pub fn load_obj(file_path: String) -> Result<Vec<Vector3<f64>>, String> {
                             y_str.parse::<f64>(),
                             z_str.parse::<f64>(),
                         ) {
-                            temp_vertices_array.push(Vector3::new(x, y, z))
+                            temp_vertices_array.push(Vector3::new(x, y, z));
                         }
                     }
                 }
@@ -54,5 +53,36 @@ pub fn load_obj(file_path: String) -> Result<Vec<Vector3<f64>>, String> {
             }
         }
     }
+
+    // Center the object around the origin
+    let center = vertices_array
+        .iter()
+        .fold(Vector3::zeros(), |acc, v| acc + v)
+        / vertices_array.len() as f64;
+    vertices_array = vertices_array.into_iter().map(|v| v - center).collect();
+
+    // Find the bounding box of the vertices
+    let mut min_bound = Vector3::new(f64::MAX, f64::MAX, f64::MAX);
+    let mut max_bound = Vector3::new(f64::MIN, f64::MIN, f64::MIN);
+
+    for vertex in &vertices_array {
+        min_bound.x = min_bound.x.min(vertex.x);
+        min_bound.y = min_bound.y.min(vertex.y);
+        min_bound.z = min_bound.z.min(vertex.z);
+
+        max_bound.x = max_bound.x.max(vertex.x);
+        max_bound.y = max_bound.y.max(vertex.y);
+        max_bound.z = max_bound.z.max(vertex.z);
+    }
+
+    // Calculate the scaling factor to normalize vertices between -1 and 1
+    let max_extent = (max_bound - min_bound).max();
+    if max_extent > 0.0 {
+        vertices_array = vertices_array
+            .into_iter()
+            .map(|v| v / max_extent)
+            .collect();
+    }
+
     Ok(vertices_array)
 }
