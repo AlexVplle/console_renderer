@@ -42,11 +42,11 @@ impl RotationMatrixAxis {
             0.0,
             step.cos(),
             step.sin(),
-            0.0, // Inverser les valeurs sin et cos
+            0.0,
             0.0,
             -step.sin(),
             step.cos(),
-            0.0, // Inverser les valeurs sin et cos
+            0.0,
             0.0,
             0.0,
             0.0,
@@ -124,11 +124,11 @@ impl RotationMatrixAxis {
             step.cos(),
             step.sin(),
             0.0,
-            0.0, // Inverser les valeurs sin et cos
+            0.0,
             -step.sin(),
             step.cos(),
             0.0,
-            0.0, // Inverser les valeurs sin et cos
+            0.0,
             0.0,
             0.0,
             1.0,
