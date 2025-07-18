@@ -54,14 +54,12 @@ pub fn load_obj(file_path: String) -> Result<Vec<Vector3<f64>>, String> {
         }
     }
 
-    // Center the object around the origin
     let center = vertices_array
         .iter()
         .fold(Vector3::zeros(), |acc, v| acc + v)
         / vertices_array.len() as f64;
     vertices_array = vertices_array.into_iter().map(|v| v - center).collect();
 
-    // Find the bounding box of the vertices
     let mut min_bound = Vector3::new(f64::MAX, f64::MAX, f64::MAX);
     let mut max_bound = Vector3::new(f64::MIN, f64::MIN, f64::MIN);
 
@@ -75,7 +73,6 @@ pub fn load_obj(file_path: String) -> Result<Vec<Vector3<f64>>, String> {
         max_bound.z = max_bound.z.max(vertex.z);
     }
 
-    // Calculate the scaling factor to normalize vertices between -1 and 1
     let max_extent = (max_bound - min_bound).max();
     if max_extent > 0.0 {
         vertices_array = vertices_array
